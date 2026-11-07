@@ -37,3 +37,13 @@ A V1 elfogadott felülete és a meglévő adatok nem írhatók felül észrevét
 - Az ismeretlen szakaszú tételek külön figyelmeztetést kapnak.
 - A lista továbbra is helyi; a Neonhoz nem kapcsolódik, nem szinkronizál.
 - A megadott polcsorrend nem tekinthető hitelesen validált üzlettérképnek.
+
+## 2026-11-07 – Családi szinkron MVP (fejlesztési ág)
+- Neon: `household_sync_state` (verziózott JSONB állapot) és `auth_login_attempts` (IP-azonosító HMAC, 15 perces zárolás).
+- API: `api/sync.js` GET/PUT, POST login/logout. HMAC-aláírt, HttpOnly, Secure, SameSite=Strict munkamenet-cookie; jelszó és szerveroldali session titok kizárólag környezeti változóban.
+- Kliens: bejelentkezés, manuális letöltés/feltöltés, felülírás előtti megerősítés. 409-es verzióütközésnél nincs csendes felülírás.
+- **Nem automatikus valós idejű szinkron**; azonos családi jelszóval minden résztvevő azonos hozzáférést kap. Egyéni fiók, meghívó, tagsági jogosultság és auditnapló még nincs.
+- Nincs Vercel-projekt és nincs production URL. A funkcióhoz `DATABASE_URL`, `SMARTSHOP_SESSION_SECRET` (legalább 32 karakter) és `SMARTSHOP_FAMILY_PASSWORD` (legalább 12 karakter) szükséges a szerveroldali környezetben. A tényleges jelszót soha ne commitoljuk.
+- **Telepítés előtt kötelező:** a GitHub Actions ellenőrzése, éles API/integrációs teszt, iPhone használati próba, backup restore teszt, és az ikon PNG 192/512/180 generálása. Az SVG forrás elkészült, a PNG-k még hiányoznak.
+- Adatbázisprojekt már létrehozva; semmilyen régi helyi adat nem került automatikusan a szerverre.
+- Biztonsági megjegyzés: a családi közös jelszavas modell csak MVP, nem személyenként elkülönített hozzáférés. Erősebb családi tagság és meghívókezelés későbbi mérföldkő.
