@@ -31,3 +31,9 @@
 
 ## Megőrzési szabály
 A V1 elfogadott felülete és a meglévő adatok nem írhatók felül észrevétlenül. A V2 változtatásai külön ágon maradnak a tesztekig. A Neon sémája új, korábbi adatok nélkül.
+
+## 2026-11-07 – bevásárlólista V2
+- Bolti szakaszonként csoportosított lista; egyedi tételszerkesztés és törlés; pipált tételek számlálója.
+- Az ismeretlen szakaszú tételek külön figyelmeztetést kapnak.
+- A lista továbbra is helyi; a Neonhoz nem kapcsolódik, nem szinkronizál.
+- A megadott polcsorrend nem tekinthető hitelesen validált üzlettérképnek.
