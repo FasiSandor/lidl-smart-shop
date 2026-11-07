@@ -40,3 +40,12 @@ assert.deepEqual(exported.zones[0],['Kávé','Tea']);
 assert.deepEqual(exported.shopping,[{name:'2 l tej',done:false},{name:'Kávé',done:true}]);
 assert.equal(backupContext.validate({...exported,zones:exported.zones.map((z,i)=>i===0?Array(500).fill('x'):z)}),false);
 console.log('Backup export/restore data roundtrip passed');
+
+assert(html.includes('id="floorCanvas"'),'spatial store canvas');
+assert(html.includes('id="unknownChips"'),'unassigned product tray');
+assert(html.includes('id="quickAdd"'),'mobile quick-add input');
+assert(script.includes('function assignUnknown('),'product placement action');
+assert(script.includes('pendingPlacement'),'tap-to-place flow');
+assert(script.includes('unassignedTouch'),'touch drag for unassigned products');
+assert(script.includes("tab('list')"),'list-first navigation');
+console.log('V3 mobile map and unassigned product controls present');
