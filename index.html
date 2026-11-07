@@ -83,6 +83,35 @@ async function pushShared(){
  }catch(e){sharedRevision=null;syncMessage('Feltöltés megállt: '+e.message)}
 }
 let touchStart=null,hoverZone=null;
+let unassignedTouch=null,unassignedHover=null;
+document.addEventListener('pointerdown',e=>{
+ const chip=e.target.closest('#unknownChips .chip');
+ if(!chip||e.pointerType!=='touch'||!mapEdit)return;
+ unassignedTouch={name:chip.textContent,id:e.pointerId,x:e.clientX,y:e.clientY,chip,moved:false};
+ chip.setPointerCapture(e.pointerId);
+},{passive:true});
+document.addEventListener('pointermove',e=>{
+ if(!unassignedTouch||e.pointerId!==unassignedTouch.id)return;
+ const t=unassignedTouch;if(Math.hypot(e.clientX-t.x,e.clientY-t.y)>12)t.moved=true;
+ if(!t.moved)return;
+ e.preventDefault();t.chip.classList.add('dragging');
+ const zone=document.elementFromPoint(e.clientX,e.clientY)?.closest('.floor-canvas .zone');
+ if(unassignedHover&&unassignedHover!==zone)unassignedHover.classList.remove('drop');
+ unassignedHover=zone;if(zone)zone.classList.add('drop');
+},{passive:false});
+document.addEventListener('pointerup',e=>{
+ if(!unassignedTouch||e.pointerId!==unassignedTouch.id)return;
+ const t=unassignedTouch;unassignedTouch=null;t.chip.classList.remove('dragging');
+ if(unassignedHover)unassignedHover.classList.remove('drop');unassignedHover=null;
+ if(!t.moved)return;
+ const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.floor-canvas .zone');
+ if(target)assignUnknown(t.name,Number(target.dataset.zone));
+});
+document.addEventListener('pointercancel',e=>{
+ if(!unassignedTouch||e.pointerId!==unassignedTouch.id)return;
+ unassignedTouch.chip.classList.remove('dragging');unassignedTouch=null;
+ if(unassignedHover)unassignedHover.classList.remove('drop');unassignedHover=null;
+});
 document.addEventListener('pointerdown',e=>{
  const chip=e.target.closest('.chip');if(!chip||e.pointerType!=='touch'||!mapEdit)return;
  touchStart={zone:Number(chip.dataset.zone),index:Number(chip.dataset.index),pointer:e.pointerId,x:e.clientX,y:e.clientY,moved:false,chip};
