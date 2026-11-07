@@ -25,3 +25,7 @@ assert.equal(findCtx.lookup('2 l tej'),19);
 assert.equal(findCtx.lookup('3 db kávé'),0);
 assert.equal(findCtx.lookup('nem létező termék'),-1);
 console.log('Hungarian quantity-aware matching passed');
+
+assert(html.includes('id="dictateBtn"'),'dictation button present');
+assert(script.includes("recognizer.lang='hu-HU'"),'Hungarian speech locale');
+assert(script.includes('window.webkitSpeechRecognition'),'Safari speech recognition fallback');
