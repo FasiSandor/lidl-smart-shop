@@ -34,3 +34,6 @@ jobs:
 
       - name: Validate serverless API security invariants
         run: node tests/api-check.cjs
+
+      - name: Run mocked family sync integration tests
+        run: node tests/api-integration.cjs
