@@ -31,3 +31,6 @@ jobs:
 
       - name: Run editor and backup schema tests
         run: node tests/check.cjs
+
+      - name: Validate serverless API security invariants
+        run: node tests/api-check.cjs
