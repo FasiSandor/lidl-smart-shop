@@ -14,9 +14,17 @@ function moveSelected(){if(picked>=0)move(active,picked,Number($('destination').
 function deleteSelected(){if(picked<0)return;checkpoint();data.zones[active].splice(picked,1);picked=-1;save();render()}
 function addProduct(){let parts=$('newProduct').value.split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);if(!parts.length)return;checkpoint();data.zones[active].push(...parts);$('newProduct').value='';save();render()}
 function norm(s){return s.toLocaleLowerCase('hu').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')}
-function findZone(term){let t=norm(term);for(let i=0;i<data.zones.length;i++)if(data.zones[i].some(x=>norm(x).includes(t)||t.includes(norm(x))))return i;return -1}
+function findZone(term){
+ const t=norm(term);
+ const aliases={'tej':'Hűtött tej','tejfol':'Tejföl','vaj':'Vaj','sajt':'Sajtok','trappista':'Sajtok','tojas':'Tojás','kenyer':'Toastkenyér','zsemle':'Zsemle','kifli':'Kifli','csirkemell':'Csirkemell','csirkecomb':'Csirkecomb','daralthus':'Darált hús','kave':'Kávé','cukor':'Cukrok','rizs':'Rizs','teszta':'Tészta','wcpapir':'WC-papír','mososzer':'Tisztítószerek','chips':'Chips','asvanyviz':'Ásványvíz','joghurt':'Joghurt','turo':'Túró'};
+ const alias=aliases[t]||null;
+ if(alias)for(let i=0;i<data.zones.length;i++)if(data.zones[i].some(x=>norm(x)===norm(alias)))return i;
+ for(let i=0;i<data.zones.length;i++)if(data.zones[i].some(x=>norm(x)===t))return i;
+ for(let i=0;i<data.zones.length;i++)if(data.zones[i].some(x=>t.length>=4&&(norm(x).includes(t)||t.includes(norm(x)))))return i;
+ return -1;
+}
 function addShopping(){let parts=$('shoppingInput').value.split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);checkpoint();data.shopping.push(...parts.map(name=>({name,done:false})));$('shoppingInput').value='';save();renderShopping()}
-function renderShopping(){let root=$('shoppingItems');root.replaceChildren();let sorted=data.shopping.map((x,i)=>({...x,i,z:findZone(x.name)})).sort((a,b)=>(a.z<0?999:a.z)-(b.z<0?999:b.z));sorted.forEach(x=>{let row=el('label','itemline');let check=el('input');check.type='checkbox';check.checked=x.done;check.onchange=()=>{checkpoint();data.shopping[x.i].done=check.checked;save()};let name=el('span','',x.name+' · '+(x.z<0?'Nincs besorolva':names[x.z]));row.append(check,name);root.append(row)})}
+function renderShopping(){let root=$('shoppingItems');root.replaceChildren();let sorted=data.shopping.map((x,i)=>({...x,i,z:findZone(x.name)})).sort((a,b)=>(a.z<0?999:a.z)-(b.z<0?999:b.z));sorted.forEach(x=>{let row=el('label','itemline');let check=el('input');check.type='checkbox';check.checked=x.done;check.onchange=()=>{checkpoint();data.shopping[x.i].done=check.checked;save()};let name=el('span','',x.name+' · '+(x.z<0?'Nincs besorolva':names[x.z]));row.append(check,name);root.append(row)});let unknown=sorted.filter(x=>x.z<0).length;if(unknown){let info=el('p','note',unknown+' termék nincs még polchoz rendelve. A bolttérképen adj hozzájuk termékcsoportot, vagy írd pontosabban a nevüket.');root.prepend(info)}}
 function clearChecked(){checkpoint();data.shopping=data.shopping.filter(x=>!x.done);save();renderShopping()}
 const BACKUP_APP='smartshop',BACKUP_VERSION=2;let pendingImport=null;
 function validData(obj){return !!obj&&Array.isArray(obj.zones)&&obj.zones.length===23&&obj.zones.every(z=>Array.isArray(z)&&z.every(x=>typeof x==='string'&&x.length<=300))&&Array.isArray(obj.shopping)&&obj.shopping.every(x=>x&&typeof x.name==='string'&&x.name.length<=300&&typeof x.done==='boolean')&&obj.shopping.length<10000}
