@@ -29,3 +29,14 @@ console.log('Hungarian quantity-aware matching passed');
 assert(html.includes('id="dictateBtn"'),'dictation button present');
 assert(script.includes("recognizer.lang='hu-HU'"),'Hungarian speech locale');
 assert(script.includes('window.webkitSpeechRecognition'),'Safari speech recognition fallback');
+
+const payloadSrc=script.slice(script.indexOf('const BACKUP_APP='),script.indexOf('function exportData(){'));
+const backupContext={Date,JSON,data:{zones:Array.from({length:23},(_,i)=>i===0?['Kávé','Tea']:[]),shopping:[{name:'2 l tej',done:false},{name:'Kávé',done:true}]}};
+vm.runInNewContext(payloadSrc+';globalThis.make=backupPayload;globalThis.validate=validData;',backupContext);
+const exported=JSON.parse(JSON.stringify(backupContext.make()));
+assert.equal(exported.app,'smartshop');assert.equal(exported.version,2);
+assert.equal(backupContext.validate(exported),true);
+assert.deepEqual(exported.zones[0],['Kávé','Tea']);
+assert.deepEqual(exported.shopping,[{name:'2 l tej',done:false},{name:'Kávé',done:true}]);
+assert.equal(backupContext.validate({...exported,zones:exported.zones.map((z,i)=>i===0?Array(500).fill('x'):z)}),false);
+console.log('Backup export/restore data roundtrip passed');
