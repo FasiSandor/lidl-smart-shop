@@ -37,3 +37,6 @@ jobs:
 
       - name: Run mocked family sync integration tests
         run: node tests/api-integration.cjs
+
+      - name: Verify server dependency install without deployment
+        run: npm install --ignore-scripts --no-audit --no-fund && node -e "require('pg'); console.log('Postgres driver loaded')"
