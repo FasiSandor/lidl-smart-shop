@@ -58,7 +58,7 @@ function renderShopping(){
 }
 function clearChecked(){checkpoint();data.shopping=data.shopping.filter(x=>!x.done);save();renderShopping()}
 const BACKUP_APP='smartshop',BACKUP_VERSION=2;let pendingImport=null;
-function validData(obj){return !!obj&&Array.isArray(obj.zones)&&obj.zones.length===23&&obj.zones.every(z=>Array.isArray(z)&&z.every(x=>typeof x==='string'&&x.length<=300))&&Array.isArray(obj.shopping)&&obj.shopping.every(x=>x&&typeof x.name==='string'&&x.name.length<=300&&typeof x.done==='boolean')&&obj.shopping.length<10000}
+function validData(obj){return !!obj&&Array.isArray(obj.zones)&&obj.zones.length===23&&obj.zones.every(z=>Array.isArray(z)&&z.length<500&&z.every(x=>typeof x==='string'&&x.length<=300))&&Array.isArray(obj.shopping)&&obj.shopping.every(x=>x&&typeof x.name==='string'&&x.name.length<=300&&typeof x.done==='boolean')&&obj.shopping.length<10000}
 function backupPayload(){return {app:BACKUP_APP,version:BACKUP_VERSION,exportedAt:new Date().toISOString(),zones:data.zones.map(z=>[...z]),shopping:data.shopping.map(x=>({name:x.name,done:x.done}))}}
 function exportData(){let payload=backupPayload();let blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});let url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download='smartshop-mentes-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function cancelImport(){pendingImport=null;$('importPreview').replaceChildren();$('importPreview').classList.add('hide')}
@@ -76,7 +76,7 @@ async function syncRequest(method,body){
 async function familyLogin(){try{const password=$('familyPassword').value;if(!password)return syncMessage('Add meg a családi jelszót.');await syncRequest('POST',{action:'login',password});$('familyPassword').value='';syncMessage('Bejelentkezve. A közös adatok letöltése külön megerősítéssel történik.')}catch(e){syncMessage('Bejelentkezés sikertelen: '+e.message)}}
 async function familyLogout(){try{await syncRequest('POST',{action:'logout'});sharedRevision=null;syncMessage('Kijelentkezve. A helyi adatok megmaradtak.')}catch(e){syncMessage(e.message)}}
 async function loadShared(){
- try{const remote=await syncRequest('GET');if(!validData(remote.payload)){if(remote.empty){sharedRevision=remote.revision;return syncMessage('A közös lista még üres. A helyi adatok feltölthetők.')}throw Error('A szerveradat formátuma nem megfelelő')}
+ try{const remote=await syncRequest('GET');if(remote.empty){sharedRevision=remote.revision;return syncMessage('A közös lista még üres. A helyi adatok feltölthetők.')}if(!validData(remote.payload))throw Error('A szerveradat formátuma nem megfelelő')
  if(!confirm('A közös lista letöltése felülírja a helyi listát és térképet. Készíts előtte JSON-exportot! Folytatod?'))return;
  checkpoint();data={zones:remote.payload.zones.map(z=>[...z]),shopping:remote.payload.shopping.map(x=>({...x}))};sharedRevision=remote.revision;save();render();renderShopping();syncMessage('Közös adatok letöltve. Verzió: '+sharedRevision)
  }catch(e){syncMessage('Letöltési hiba: '+e.message)}
