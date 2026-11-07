@@ -1,0 +1,18 @@
+const fs=require('node:fs');const vm=require('node:vm');const assert=require('node:assert/strict');
+const html=fs.readFileSync('index.html','utf8');
+const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert(script,'inline JS');
+new vm.Script(script,{filename:'smartshop.js'});
+const context={console,Date,JSON,Set,Array,Number,String,Math,Blob,URL,localStorage:{getItem:()=>null,setItem(){}},document:{getElementById:()=>({textContent:'',disabled:false}),addEventListener(){}},render:()=>{}};
+const head=script.slice(0,script.indexOf('let touchStart='));
+assert(head.includes('function validData('),'backup validator');
+assert(head.includes('function applyImport('),'restore modes');
+assert(head.includes('function checkpoint('),'undo');
+const extracted=head.slice(head.indexOf('const BACKUP_APP='),head.indexOf('function backupPayload('));
+vm.runInNewContext(extracted+';globalThis.check=validData;',context);
+const seed=Array.from({length:23},()=>[]);
+assert.equal(context.check({zones:seed,shopping:[]}),true);
+assert.equal(context.check({zones:seed.slice(1),shopping:[]}),false);
+assert.equal(context.check({zones:seed,shopping:[{name:'tej',done:false}]}),true);
+assert.equal(context.check({zones:seed,shopping:[{name:'tej',done:'no'}]}),false);
+assert.equal(context.check({zones:seed,shopping:[{name:'x'.repeat(301),done:false}]}),false);
+console.log('Smart Shop static and backup schema checks passed');
