@@ -6,7 +6,7 @@ assert(code.includes('HttpOnly; Secure; SameSite=Strict'),'secure session cookie
 assert(code.includes('WHERE household_id=$2 AND revision=$3'),'optimistic concurrency guard');
 assert(code.includes('auth_login_attempts'),'persistent login throttling');
 assert(code.includes('blocked_until'),'temporary lockout');
-assert(code.includes('new URL(origin).host!==host'),'origin guard');
+assert(code.includes('originHost!==host'),'origin guard');
 assert(code.includes('safeData(payload)'),'payload validation');
 assert(!code.includes('process.env.DATABASE_URL='),'no hard-coded connection');
 console.log('API static security checks passed');
