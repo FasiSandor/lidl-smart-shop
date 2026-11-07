@@ -16,8 +16,16 @@ module.exports=async function handler(req,res){
   if(req.method!=='GET'){const origin=req.headers.origin,host=req.headers['x-forwarded-host']||req.headers.host;if(origin&&new URL(origin).host!==host)return respond(res,403,{error:'Érvénytelen kérés eredete'});}
   if(req.method==='POST'&&req.body?.action==='login'){
    const given=String(req.body.password||'');if(given.length>512)return respond(res,400,{error:'Érvénytelen jelszó'});
+   const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'unknown').split(',')[0].trim();
+   const key=crypto.createHmac('sha256',secret).update(ip).digest('hex');
+   const gate=await db().query('SELECT failures,blocked_until FROM auth_login_attempts WHERE client_key=$1',[key]);
+   if(gate.rows[0]?.blocked_until&&new Date(gate.rows[0].blocked_until)>new Date())return respond(res,429,{error:'Túl sok próbálkozás. Próbáld újra később.'});
    const left=crypto.createHash('sha256').update(given).digest(),right=crypto.createHash('sha256').update(password).digest();
-   if(!crypto.timingSafeEqual(left,right))return respond(res,401,{error:'Hibás családi jelszó'});
+   if(!crypto.timingSafeEqual(left,right)){
+    await db().query("INSERT INTO auth_login_attempts(client_key,failures,blocked_until) VALUES($1,1,NULL) ON CONFLICT(client_key) DO UPDATE SET failures=CASE WHEN auth_login_attempts.updated_at<now()-interval '15 minutes' THEN 1 ELSE auth_login_attempts.failures+1 END, blocked_until=CASE WHEN auth_login_attempts.failures>=4 AND auth_login_attempts.updated_at>=now()-interval '15 minutes' THEN now()+interval '15 minutes' ELSE NULL END,updated_at=now()",[key]);
+    return respond(res,401,{error:'Hibás családi jelszó'});
+   }
+   await db().query('DELETE FROM auth_login_attempts WHERE client_key=$1',[key]);
    const token=sign({scope:'family',exp:Date.now()+7*86400000},secret);
    res.setHeader('Set-Cookie','smartshop_session='+encodeURIComponent(token)+'; Path=/api; HttpOnly; Secure; SameSite=Strict; Max-Age=604800');
    return respond(res,200,{ok:true});
