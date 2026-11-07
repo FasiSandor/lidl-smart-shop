@@ -28,3 +28,6 @@ jobs:
           }
           if(!s.includes('pointercancel')||!s.includes('setPointerCapture'))throw Error('Touch drag handling missing');
           NODE
+
+      - name: Run editor and backup schema tests
+        run: node tests/check.cjs
