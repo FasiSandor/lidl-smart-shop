@@ -16,3 +16,12 @@ assert.equal(context.check({zones:seed,shopping:[{name:'tej',done:false}]}),true
 assert.equal(context.check({zones:seed,shopping:[{name:'tej',done:'no'}]}),false);
 assert.equal(context.check({zones:seed,shopping:[{name:'x'.repeat(301),done:false}]}),false);
 console.log('Smart Shop static and backup schema checks passed');
+
+const findZoneSrc=script.slice(script.indexOf('function findZone(term){'),script.indexOf('function addShopping(){'));
+const findCtx={norm:x=>x.toLocaleLowerCase('hu').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]/g,''),data:{zones:Array.from({length:23},()=>[])}};
+findCtx.data.zones[19]=['Hűtött tej','Tejföl'];findCtx.data.zones[0]=['Kávé'];
+vm.runInNewContext(findZoneSrc+';globalThis.lookup=findZone;',findCtx);
+assert.equal(findCtx.lookup('2 l tej'),19);
+assert.equal(findCtx.lookup('3 db kávé'),0);
+assert.equal(findCtx.lookup('nem létező termék'),-1);
+console.log('Hungarian quantity-aware matching passed');
