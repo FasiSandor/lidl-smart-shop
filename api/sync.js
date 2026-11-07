@@ -13,10 +13,10 @@ async function ensureState(client){const household=await client.query("INSERT IN
 module.exports=async function handler(req,res){
  try{
   const {secret,password}=config();
-  if(req.method!=='GET'){const origin=req.headers.origin,host=req.headers['x-forwarded-host']||req.headers.host;if(origin&&new URL(origin).host!==host)return respond(res,403,{error:'Érvénytelen kérés eredete'});}
+  if(req.method!=='GET'){const origin=req.headers.origin,host=req.headers['x-forwarded-host']||req.headers.host;let originHost='';try{originHost=origin?new URL(origin).host:''}catch{return respond(res,403,{error:'Érvénytelen kérés eredete'})}if(origin&&originHost!==host)return respond(res,403,{error:'Érvénytelen kérés eredete'});}
   if(req.method==='POST'&&req.body?.action==='login'){
    const given=String(req.body.password||'');if(given.length>512)return respond(res,400,{error:'Érvénytelen jelszó'});
-   const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'unknown').split(',')[0].trim();
+   const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'unknown').slice(0,512).split(',')[0].trim();
    const key=crypto.createHmac('sha256',secret).update(ip).digest('hex');
    const gate=await db().query('SELECT failures,blocked_until FROM auth_login_attempts WHERE client_key=$1',[key]);
    if(gate.rows[0]?.blocked_until&&new Date(gate.rows[0].blocked_until)>new Date())return respond(res,429,{error:'Túl sok próbálkozás. Próbáld újra később.'});
