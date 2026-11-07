@@ -15,7 +15,7 @@ function deleteSelected(){if(picked<0)return;checkpoint();data.zones[active].spl
 function addProduct(){let parts=$('newProduct').value.split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);if(!parts.length)return;checkpoint();data.zones[active].push(...parts);$('newProduct').value='';save();render()}
 function norm(s){return s.toLocaleLowerCase('hu').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')}
 function findZone(term){
- const t=norm(term);
+ const t=norm(term.replace(/^\s*\d+(?:[.,]\d+)?\s*(?:db|kg|dkg|g|l|dl|ml|csomag|cs|doboz|üveg|uveg)?\s+/i,'').replace(/\s+\d+(?:[.,]\d+)?\s*(?:db|kg|dkg|g|l|dl|ml)\s*$/i,''));
  const aliases={'tej':'Hűtött tej','tejfol':'Tejföl','vaj':'Vaj','sajt':'Sajtok','trappista':'Sajtok','tojas':'Tojás','kenyer':'Toastkenyér','zsemle':'Zsemle','kifli':'Kifli','csirkemell':'Csirkemell','csirkecomb':'Csirkecomb','daralthus':'Darált hús','kave':'Kávé','cukor':'Cukrok','rizs':'Rizs','teszta':'Tészta','wcpapir':'WC-papír','mososzer':'Tisztítószerek','chips':'Chips','asvanyviz':'Ásványvíz','joghurt':'Joghurt','turo':'Túró'};
  const alias=aliases[t]||null;
  if(alias)for(let i=0;i<data.zones.length;i++)if(data.zones[i].some(x=>norm(x)===norm(alias)))return i;
