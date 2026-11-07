@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto');
+const code=fs.readFileSync('api/sync.js','utf8');
+new vm.Script(code,{filename:'api/sync.js'});
+assert(code.includes('timingSafeEqual'),'constant-time secret comparison');
+assert(code.includes('HttpOnly; Secure; SameSite=Strict'),'secure session cookie');
+assert(code.includes('WHERE household_id=$2 AND revision=$3'),'optimistic concurrency guard');
+assert(code.includes('auth_login_attempts'),'persistent login throttling');
+assert(code.includes('blocked_until'),'temporary lockout');
+assert(code.includes('originHost!==host'),'origin guard');
+assert(code.includes('safeData(payload)'),'payload validation');
+assert(!code.includes('process.env.DATABASE_URL='),'no hard-coded connection');
+console.log('API static security checks passed');

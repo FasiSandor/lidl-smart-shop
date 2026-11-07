@@ -1,0 +1,14 @@
+{
+  "name": "lidl-smart-shop",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/check.cjs && node tests/api-check.cjs"
+  },
+  "dependencies": {
+    "pg": "^8.13.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

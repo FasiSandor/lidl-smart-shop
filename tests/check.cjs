@@ -1,0 +1,42 @@
+const fs=require('node:fs');const vm=require('node:vm');const assert=require('node:assert/strict');
+const html=fs.readFileSync('index.html','utf8');
+const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert(script,'inline JS');
+new vm.Script(script,{filename:'smartshop.js'});
+const context={console,Date,JSON,Set,Array,Number,String,Math,Blob,URL,localStorage:{getItem:()=>null,setItem(){}},document:{getElementById:()=>({textContent:'',disabled:false}),addEventListener(){}},render:()=>{}};
+const head=script.slice(0,script.indexOf('let touchStart='));
+assert(head.includes('function validData('),'backup validator');
+assert(head.includes('function applyImport('),'restore modes');
+assert(head.includes('function checkpoint('),'undo');
+const extracted=head.slice(head.indexOf('const BACKUP_APP='),head.indexOf('function backupPayload('));
+vm.runInNewContext(extracted+';globalThis.check=validData;',context);
+const seed=Array.from({length:23},()=>[]);
+assert.equal(context.check({zones:seed,shopping:[]}),true);
+assert.equal(context.check({zones:seed.slice(1),shopping:[]}),false);
+assert.equal(context.check({zones:seed,shopping:[{name:'tej',done:false}]}),true);
+assert.equal(context.check({zones:seed,shopping:[{name:'tej',done:'no'}]}),false);
+assert.equal(context.check({zones:seed,shopping:[{name:'x'.repeat(301),done:false}]}),false);
+console.log('Smart Shop static and backup schema checks passed');
+
+const findZoneSrc=script.slice(script.indexOf('function findZone(term){'),script.indexOf('function addShopping(){'));
+const findCtx={norm:x=>x.toLocaleLowerCase('hu').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]/g,''),data:{zones:Array.from({length:23},()=>[])}};
+findCtx.data.zones[19]=['Hűtött tej','Tejföl'];findCtx.data.zones[0]=['Kávé'];
+vm.runInNewContext(findZoneSrc+';globalThis.lookup=findZone;',findCtx);
+assert.equal(findCtx.lookup('2 l tej'),19);
+assert.equal(findCtx.lookup('3 db kávé'),0);
+assert.equal(findCtx.lookup('nem létező termék'),-1);
+console.log('Hungarian quantity-aware matching passed');
+
+assert(html.includes('id="dictateBtn"'),'dictation button present');
+assert(script.includes("recognizer.lang='hu-HU'"),'Hungarian speech locale');
+assert(script.includes('window.webkitSpeechRecognition'),'Safari speech recognition fallback');
+
+const payloadSrc=script.slice(script.indexOf('const BACKUP_APP='),script.indexOf('function exportData(){'));
+const backupContext={Date,JSON,data:{zones:Array.from({length:23},(_,i)=>i===0?['Kávé','Tea']:[]),shopping:[{name:'2 l tej',done:false},{name:'Kávé',done:true}]}};
+vm.runInNewContext(payloadSrc+';globalThis.make=backupPayload;globalThis.validate=validData;',backupContext);
+const exported=JSON.parse(JSON.stringify(backupContext.make()));
+assert.equal(exported.app,'smartshop');assert.equal(exported.version,2);
+assert.equal(backupContext.validate(exported),true);
+assert.deepEqual(exported.zones[0],['Kávé','Tea']);
+assert.deepEqual(exported.shopping,[{name:'2 l tej',done:false},{name:'Kávé',done:true}]);
+assert.equal(backupContext.validate({...exported,zones:exported.zones.map((z,i)=>i===0?Array(500).fill('x'):z)}),false);
+console.log('Backup export/restore data roundtrip passed');

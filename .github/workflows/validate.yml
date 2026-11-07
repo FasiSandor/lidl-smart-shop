@@ -1,0 +1,42 @@
+name: Static validation
+on:
+  push:
+    branches: [feat/touch-map-editor-v2]
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax without deployment
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const match=html.match(/<script>([\s\S]*?)<\/script>/);
+          if(!match)throw Error('Inline script missing');
+          fs.writeFileSync('/tmp/smartshop-check.js',match[1]);
+          NODE
+          node --check /tmp/smartshop-check.js
+      - name: Verify key editor elements
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const s=fs.readFileSync('index.html','utf8');
+          for(const id of ['rear','front','backZone','zoneItems','shoppingItems','importFile']) {
+            if(!s.includes('id="'+id+'"'))throw Error('Missing '+id);
+          }
+          if(!s.includes('pointercancel')||!s.includes('setPointerCapture'))throw Error('Touch drag handling missing');
+          NODE
+
+      - name: Run editor and backup schema tests
+        run: node tests/check.cjs
+
+      - name: Validate serverless API security invariants
+        run: node tests/api-check.cjs
+
+      - name: Run mocked family sync integration tests
+        run: node tests/api-integration.cjs
+
+      - name: Verify server dependency install without deployment
+        run: npm install --ignore-scripts --no-audit --no-fund && node -e "require('pg'); console.log('Postgres driver loaded')"
