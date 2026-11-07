@@ -47,3 +47,13 @@ A V1 elfogadott felülete és a meglévő adatok nem írhatók felül észrevét
 - **Telepítés előtt kötelező:** a GitHub Actions ellenőrzése, éles API/integrációs teszt, iPhone használati próba, backup restore teszt, és az ikon PNG 192/512/180 generálása. Az SVG forrás elkészült, a PNG-k még hiányoznak.
 - Adatbázisprojekt már létrehozva; semmilyen régi helyi adat nem került automatikusan a szerverre.
 - Biztonsági megjegyzés: a családi közös jelszavas modell csak MVP, nem személyenként elkülönített hozzáférés. Erősebb családi tagság és meghívókezelés későbbi mérföldkő.
+
+## V3 spatial floorplan and iPhone navigation (development branch)
+- Branch: `feat/ios-floorplan-v3`; do not merge to `main` or deploy without the consolidated milestone review.
+- UI: shopping list is the default home screen; fixed three-tab bottom navigation (List / Store map / Data).
+- Map: schematic, not a surveyed or official Lidl plan. Five aisle pairs, front and rear segments, cross-walkway, entry, checkout and special zones. All **23 existing zone indices** and product catalog values are preserved in localStorage key `smartshop-v1`.
+- Products on the shopping list that cannot be matched to a zone appear in a separate unassigned tray. In map edit mode, drag one onto a shelf with touch or mouse; alternatively tap it and choose a numbered zone. The category is then appended to the existing zone and subsequent matching uses it.
+- The map supports horizontal scrolling and +/- zoom; it is not a geometric routing engine and does not claim an accurate Lidl store layout.
+- Existing JSON backup/import and explicit manual family sync remain. A remote household copy is only changed when the user explicitly uploads; local changes remain local until then.
+- Known limitation: name-based matching can ambiguously map similar products; the zone is stored as a category string in the existing 23-zone data model. For future precise product locations, use a separately versioned mapping with migration and backup tests.
+- Release checklist: green GitHub CI, hands-on iPhone Safari touch/zoom/scroll and import/restore verification, confirm existing family data, one consolidated production deployment after explicit approval.
